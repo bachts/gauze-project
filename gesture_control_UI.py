@@ -1,5 +1,6 @@
 import cv2
 
+# Setting a default count for testing
 current_count = 10
 
 def get_count():
@@ -30,7 +31,7 @@ def update_count(gesture_number):
         reset_count()
 
 # Just a function to display the countdown timer
-def countdown_display(curGestureTime: int, gesture_no: int, countdownTime: int = 50) -> bool:
+def countdown_display(curGestureTime: int, gesture_no: int, countdownTime: int = 50):
     rem = countdownTime - curGestureTime
 
     count_update_string = ""
