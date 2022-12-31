@@ -1,117 +1,67 @@
 import cv2
+import tkinter as tk
+from PIL import Image, ImageTk
 
-# Setting a default count for testing
-current_count = 10
-
-def get_count():
-    return current_count
-
-
-def reset_count():
-    global current_count
-    current_count = 0
-
-
-def decrement_count():
-    global current_count
-    current_count -= 1
-
-
-def increment_count():
-    global current_count
-    current_count += 1
-
-# Update the count depending on the gesture_number
-def update_count(gesture_number):
-    if gesture_number == 1:
-        increment_count()
-    elif gesture_number == 2:
-        decrement_count()
-    else:
-        reset_count()
-
-# Just a function to display the countdown timer
-def countdown_display(curGestureTime: int, gesture_no: int, countdownTime: int = 50):
-    rem = countdownTime - curGestureTime
-
-    count_update_string = ""
-    if gesture_no == 1:
-        count_update_string = "COUNT INCREMENTED"
-    elif gesture_no == 2:
-        count_update_string = "COUNT DECREMENTED"
-    else:
-        count_update_string = "COUNT RESET"
-
-    printed_string = f"Hold gesture {gesture_no} for {rem} more ms" if rem > 0 else count_update_string
-
-    cv2.putText(frame, printed_string,
-                (60, 60), font, 1, color, 2, cv2.LINE_AA)
-
-
-def detect_gesture():
-    # If m is pressed return 1
-    if cv2.waitKey(50) & 0xFF == ord('m'):
-        return 1
-    # If n is pressed return 2
-    elif cv2.waitKey(50) & 0xFF == ord('n'):
-        return 2
-    # If b is pressed return 3
-    elif cv2.waitKey(50) & 0xFF == ord('b'):
-        return 3
-    # Return 0
-    else:
-        return 0
-
-
-# Create a VideoCapture object
+# Open the video stream
 cap = cv2.VideoCapture(0)
 
-# Set up the text font and color
-font = cv2.FONT_HERSHEY_SIMPLEX
-color = (255, 255, 255)
+# Create the Tkinter window and label
+window = tk.Tk()
+label = tk.Label(window)
+label.pack()
 
-# This is a tracker of how many times the bottom while-loop has been run with the gesture having been detected
-curGestureTime = 0
+# Create a label widget to display the count
+count_label = tk.Label(window, text="Count: 10", font=("Helvetica", 24))
+count_label.pack(pady=10)
 
-# Start looping
-while True:
+count = 10  # Initial count value
 
-    # Capture frame-by-frame
+def increment():
+    global count
+    count += 1
+    count_label.config(text="Count: {}".format(count))
+
+def decrement():
+    global count
+    count -= 1
+    count_label.config(text="Count: {}".format(count))
+
+def reset_count():
+    global count
+    count = 0
+    count_label.config(text="Count: {}".format(count))
+
+# Create the increment button
+button1 = tk.Button(window, text="Increment", command=increment, font=("Helvetica", 16), width=20, bg='grey')
+button1.pack(side='left', padx=100)
+
+# Create the decrement button
+button2 = tk.Button(window, text="Decrement", command=decrement, font=("Helvetica", 16), width=20, bg='grey')
+button2.pack(side='left', padx=100)
+
+# Create the decrement button
+button3 = tk.Button(window, text="Reset Count", command=reset_count, font=("Helvetica", 16), width=20, bg='grey')
+button3.pack(side='left', padx=100)
+
+def update_frame():
+    # Read the next frame from the stream
     ret, frame = cap.read()
 
-    # This is a gesture function. Returns 0 if no gesture detected. Returns 1,2,3 etc depending on gesture number
-    gesture = detect_gesture()
+    # Convert the frame to a PhotoImage object
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(frame)
+    image = ImageTk.PhotoImage(image)
 
-    # If gesture is detected
-    if gesture != 0:
+    # Update the label with the new frame
+    label.config(image=image)
+    label.image = image
 
-        # Current time with a gesture held is incremented
-        curGestureTime += 1
-
-        # Display
-        countdown_display(curGestureTime, gesture, countdownTime=50)
-
-        # If the countdown has reached 0
-        if 50-curGestureTime == 0:
-
-            # We update the count depending on the gesture number
-            update_count(gesture_number=gesture)
-    else:
-        # Gesture is no longer detected. Reset count
-        curGestureTime = 0
-
-    # Make sure to put the text on every frame
-    cv2.putText(frame, f"Gauze Count: {get_count()}",
-                (10, 300), font, 1, color, 2, cv2.LINE_AA)
-
-    # Quit the window if q is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    
-    # Display the resulting frame
-    cv2.imshow('Frame', frame)
+    # Schedule the next frame update
+    window.after(30, update_frame)
 
 
-# When everything done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+# Start updating the frame
+update_frame()
+
+# Run the Tkinter event loop
+window.mainloop()
